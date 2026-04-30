@@ -1,74 +1,91 @@
 # Encoding Guard
 
-Encoding Guard is a Codex plugin that helps scan repositories for encoding risks and safely normalize unmodified files to UTF-8 without BOM.
+English | [简体中文](./README.zh-CN.md)
 
-## Included Components
+Encoding Guard is a Codex plugin for detecting encoding risks and safely normalizing text files to UTF-8 without BOM.
 
-- `skills/encoding-guard/SKILL.md`: Codex skill entry point
-- `scripts/encoding_scan.ps1`: scans for BOM and replacement-character issues
-- `scripts/encoding_report.ps1`: produces a Markdown report
-- `scripts/encoding_fix_safe.ps1`: normalizes a file with modification checks and backup support
-- `.codex-plugin/plugin.json`: plugin manifest
+It is designed for repositories that may contain BOM markers, mojibake, replacement characters, or mixed working-copy states in Git and SVN.
+
+## Features
+
+- Detects UTF-8 BOM markers
+- Detects replacement characters such as `U+FFFD`
+- Checks whether files are locally modified in Git or SVN
+- Refuses to rewrite modified files unless explicitly overridden
+- Creates backups before rewriting by default
+- Generates Markdown reports for review and sharing
+
+## Repository Layout
+
+```text
+.codex-plugin/plugin.json         Plugin manifest
+skills/encoding-guard/SKILL.md    Codex skill entry
+scripts/encoding_scan.ps1         Encoding scan script
+scripts/encoding_report.ps1       Markdown report generator
+scripts/encoding_fix_safe.ps1     Safe normalization script
+scripts/package_plugin.ps1        Release packaging script
+```
 
 ## Safety Model
 
-- Detects UTF-8 BOM and replacement character `U+FFFD`
-- Checks local modification state in Git and SVN
-- Refuses to rewrite modified files unless `-ForceModified` is provided
-- Creates a backup before rewriting unless `-NoBackup` is provided
+Encoding Guard is intentionally conservative:
 
-## Install
+- Scan first, rewrite second
+- Modified files are blocked unless `-ForceModified` is explicitly provided
+- Backups are created unless `-NoBackup` is explicitly provided
+- Replacement characters are reported as corruption signals, not auto-repairable text
 
-1. Place this plugin in a Codex plugin directory as `plugins/encoding-guard`.
-2. Review `.codex-plugin/plugin.json` and replace all `[TODO: ...]` publisher fields.
-3. Restart Codex or reload plugins.
+## Usage
 
-## Local Marketplace
-
-This repository now includes a local marketplace entry at `.agents/plugins/marketplace.json`.
-
-If you use this repo as a local marketplace root, Codex can discover this plugin from:
-
-- `./plugins/encoding-guard` relative to the marketplace file
-
-For this repository layout, the expected published structure is:
-
-```text
-<marketplace-root>/
-  .agents/plugins/marketplace.json
-  plugins/encoding-guard/
-```
-
-If you publish from this repository directly, copy or extract the packaged plugin folder into `plugins/encoding-guard`.
-
-## Package for Release
-
-Run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\package_plugin.ps1
-```
-
-This creates a zip file under `dist/` containing the plugin files needed for distribution.
-
-## Usage Examples
+Scan a repository:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\encoding_scan.ps1 C:\repo
 ```
 
+Generate a Markdown report:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\encoding_report.ps1 C:\repo -OutFile .\encoding-report.md
 ```
+
+Normalize a file safely:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\encoding_fix_safe.ps1 C:\repo\src\File.java
 ```
 
-## Release Checklist
+Force a rewrite for a locally modified file:
 
-- Fill in publisher metadata in `.codex-plugin/plugin.json`
-- If needed, copy the packaged plugin to `plugins/encoding-guard` under your marketplace root
-- Verify the three PowerShell scripts run on a sample repository
-- Build the release zip with `scripts/package_plugin.ps1`
-- Publish the zip or the unpacked `encoding-guard` folder
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\encoding_fix_safe.ps1 C:\repo\src\File.java -ForceModified
+```
+
+## Install as a Local Plugin
+
+1. Place the plugin folder at `plugins/encoding-guard`.
+2. Ensure `.codex-plugin/plugin.json` is present.
+3. Reload Codex or restart the app.
+
+For marketplace-based local loading, see [PUBLISHING.md](./PUBLISHING.md).
+
+## Build a Release Package
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package_plugin.ps1
+```
+
+This generates:
+
+- `dist/encoding-guard/`
+- `dist/encoding-guard-1.0.0.zip`
+
+## Documentation
+
+- [PUBLISHING.md](./PUBLISHING.md)
+- [PRIVACY.md](./PRIVACY.md)
+- [TERMS.md](./TERMS.md)
+
+## License
+
+This project is released under the [MIT License](./LICENSE).
